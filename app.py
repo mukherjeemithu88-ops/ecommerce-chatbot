@@ -50,24 +50,34 @@ async def chat(data: dict):
     try:
         user_input = data.get("message", "").lower()
 
-        if "iphone17" in user_input:
-            return {
-                "response": "Here is comparison for iPhone 17:\n\nAmazon: ₹79,999\nFlipkart: ₹78,500\nCroma: ₹80,200\n\n👉 Best deal: Flipkart"
-            }
+        df = pd.read_excel("data.xlsx")
 
-        elif "smartwatch" in user_input:
-            return {
-                "response": "Top Smartwatch:\n\nNoise: ₹2,999\nBoat: ₹2,499\nFirebolt: ₹2,199\n\n👉 Best: Firebolt"
-            }
+        # Normalize text
+        df = df.fillna("").astype(str)
+        df_lower = df.apply(lambda col: col.str.lower())
+
+        # Match rows where ANY column contains the full phrase
+        matched = df_lower[
+            df_lower.apply(lambda row: user_input in " ".join(row.values), axis=1)
+        ]
+
+        if not matched.empty:
+            response = "🔎 Here’s what I found:\n\n"
+
+            for _, row in matched.iterrows():
+                response += f"Product: {row.get('Product','')}\n"
+                response += f"Category: {row.get('Category','')}\n"
+                response += f"Amazon: {row.get('Amazon','')}\n"
+                response += f"Flipkart: {row.get('Flipkart','')}\n"
+                response += f"Croma: {row.get('Croma','')}\n\n"
+
+            return {"response": response}
 
         else:
-            return {
-                "response": "I can help compare products. Try: compare iphone17"
-            }
+            return {"response": "I couldn’t find that. Try product names like 'lamp', 'earbuds', 'iphone'"}
 
     except Exception as e:
-        return {"response": "Something went wrong. Please try again."}
-
+        return {"response": f"Error: {str(e)}"}
     # ---- Simple intents ----
     if "compare" in user:
         # try to extract product name after 'compare'
