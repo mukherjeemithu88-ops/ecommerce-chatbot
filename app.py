@@ -46,8 +46,27 @@ def normalize(text: str) -> str:
 
 # ---------- Chat endpoint ----------
 @app.post("/chat")
-def chat(req: ChatRequest):
-    user = (req.message or "").strip().lower()
+async def chat(data: dict):
+    try:
+        user_input = data.get("message", "").lower()
+
+        if "iphone17" in user_input:
+            return {
+                "response": "Here is comparison for iPhone 17:\n\nAmazon: ₹79,999\nFlipkart: ₹78,500\nCroma: ₹80,200\n\n👉 Best deal: Flipkart"
+            }
+
+        elif "smartwatch" in user_input:
+            return {
+                "response": "Top Smartwatch:\n\nNoise: ₹2,999\nBoat: ₹2,499\nFirebolt: ₹2,199\n\n👉 Best: Firebolt"
+            }
+
+        else:
+            return {
+                "response": "I can help compare products. Try: compare iphone17"
+            }
+
+    except Exception as e:
+        return {"response": "Something went wrong. Please try again."}
 
     # ---- Simple intents ----
     if "compare" in user:
