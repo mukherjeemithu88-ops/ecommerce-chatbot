@@ -1,56 +1,83 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 import pandas as pd
 import re
+import os
 
 app = FastAPI()
 
+# ---------- Serve UI ----------
+@app.get("/", response_class=HTMLResponse)
+def serve_ui():
+    # Works locally and on Render
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(base_dir, "index.html")
+    with open(file_path, "r", encoding="utf-8") as f:
+        return f.read()
+
+# ---------- CORS (allow your HTML to call /chat) ----------
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# ---------- Request model ----------
 class ChatRequest(BaseModel):
     message: str
 
-# Load Excel
-df = pd.read_excel("data.xlsx", header=None)
-df = df.iloc[3:]
-df.columns = ["Category","Product","Amazon","Flipkart","Croma","JioMart","TataCliq","Features"]
+# ---------- Load data (optional) ----------
+# If you have an Excel file like data.xlsx, it will load it.
+# If not, app still works with fallback responses.
+DATA = None
+for fname in ["data.xlsx", "data.xls"]:
+    if os.path.exists(fname):
+        try:
+            DATA = pd.read_excel(fname)
+            break
+        except Exception:
+            DATA = None
 
-def normalize(text):
-    return str(text).lower().replace(" ", "")
+def normalize(text: str) -> str:
+    return re.sub(r"\s+", "", str(text).lower())
 
-def extract_price(text):
-    if pd.isna(text):
-        return None
-    match = re.search(r"₹[\d,]+", str(text))
-    return match.group() if match else "N/A"
-
+# ---------- Chat endpoint ----------
 @app.post("/chat")
 def chat(req: ChatRequest):
-    user_msg = req.message
+    user = (req.message or "").strip().lower()
 
-    # Find product
-    row = df[df["Product"].apply(
-        lambda x: normalize(x) in normalize(user_msg) if isinstance(x, str) else False
-    )]
+    # ---- Simple intents ----
+    if "compare" in user:
+        # try to extract product name after 'compare'
+        parts = user.split("compare", 1)
+        query = normalize(parts[1]) if len(parts) > 1 else ""
 
-    if row.empty:
-        return {"reply": "Sorry, I couldn't find that product."}
+        # If we have data, try to find matching rows
+        if DATA is not None and "product" in [c.lower() for c in DATA.columns]:
+            # find product column name (case-insensitive)
+            prod_col = next(c for c in DATA.columns if c.lower() == "product")
+            matches = DATA[DATA[prod_col].astype(str).str.lower().str.contains(query, na=False)]
 
-    row = row.iloc[0]
+            if len(matches) > 0:
+                # build a simple comparison text
+                lines = []
+                for _, r in matches.iterrows():
+                    row_txt = []
+                    for c in DATA.columns:
+                        val = r[c]
+                        if pd.notna(val):
+                            row_txt.append(f"{c}: {val}")
+                    lines.append(" | ".join(row_txt))
+                return {"response": "Here’s what I found:\n\n" + "\n".join(lines)}
 
-    # Build response manually (NO AI yet)
-    reply = f"{row['Product']} prices:\n"
-    reply += f"Amazon: {extract_price(row['Amazon'])}\n"
-    reply += f"Flipkart: {extract_price(row['Flipkart'])}\n"
-    reply += f"Croma: {extract_price(row['Croma'])}\n"
-    reply += f"JioMart: {extract_price(row['JioMart'])}\n"
-    reply += f"TataCliq: {extract_price(row['TataCliq'])}"
+        # fallback
+        return {"response": f"I couldn't find '{query}'. Try exact name like 'compare iphone17'."}
 
-    return {"reply": reply}
+    if "price" in user:
+        return {"response": "Tell me the product name, e.g., 'price iphone17 on amazon'."}
+
+    # default
+    return {"response": "I can help compare products. Try: 'compare iphone17'."}
