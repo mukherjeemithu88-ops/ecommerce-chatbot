@@ -1,112 +1,56 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Abhishek E-commerce Solutions</title>
+<title>Abhishek E-commerce Solutions</title>
 
-    <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f7fb;
-      margin: 0;
-    }
-
-    .container {
-      max-width: 700px;
-      margin: 40px auto;
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-
-    #chat-box {
-      height: 400px;
-      overflow-y: auto;
-      border: 1px solid #ddd;
-      padding: 10px;
-      border-radius: 8px;
-      background: #fafafa;
-    }
-
-    .user {
-      margin: 8px 0;
-    }
-
-    .bot {
-      margin: 8px 0;
-      color: #0b5ed7;
-    }
-
-    input {
-      width: 75%;
-      padding: 10px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
-
-    button {
-      padding: 10px 16px;
-      border: none;
-      background: #0b5ed7;
-      color: white;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #094db1;
-    }
-    </style>
+<style>
+body { font-family: Arial; background:#f5f7fb; }
+.container { max-width:700px; margin:40px auto; background:white; padding:20px; border-radius:10px; }
+#chat-box { height:400px; overflow:auto; border:1px solid #ccc; padding:10px; }
+input { width:75%; padding:10px; }
+button { padding:10px; background:#0b5ed7; color:white; }
+</style>
 
 </head>
+
 <body>
 
 <div class="container">
+<h2>🤖 Abhishek E-commerce Solutions</h2>
 
-    <h2>🤖 Abhishek E-commerce Solutions</h2>
+<div id="chat-box"></div><br>
 
-    <div id="chat-box"></div>
-
-    <br>
-
-    <input type="text" id="user-input" placeholder="Type your message...">
-    <button onclick="sendMessage()">Send</button>
-
+<input id="user-input">
+<button onclick="sendMessage()">Send</button>
 </div>
-    <script>
-        async function sendMessage() {
-            const input = document.getElementById("user-input");
-            const chatBox = document.getElementById("chat-box");
 
-            const message = input.value;
+<script>
+async function sendMessage() {
+    const input = document.getElementById("user-input");
+    const box = document.getElementById("chat-box");
 
-            if (!message) return;
+    let msg = input.value;
+    if (!msg) return;
 
-            // Show user message
-            chatBox.innerHTML += "<p><b>You:</b> " + message + "</p>";
+    box.innerHTML += "<p><b>You:</b> " + msg + "</p>";
 
-            try {
-                const response = await fetch("/chat", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({ message: message })
-                });
+    try {
+        const res = await fetch("/chat", {
+            method: "POST",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({message: msg})
+        });
 
-                const data = await response.json();
+        const data = await res.json();
+        box.innerHTML += "<p><b>Bot:</b> " + data.response + "</p>";
 
-                // Show bot response
-                chatBox.innerHTML += "<p><b>Bot:</b> " + data.response + "</p>";
+    } catch {
+        box.innerHTML += "<p style='color:red;'>ERROR</p>";
+    }
 
-            } catch (error) {
-                chatBox.innerHTML += "<p style='color:red;'>ERROR</p>";
-            }
-
-            input.value = "";
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-    </script>
+    input.value = "";
+}
+</script>
 
 </body>
 </html>
