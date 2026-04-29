@@ -2,20 +2,77 @@
 <html>
 <head>
     <title>Abhishek E-commerce Solutions</title>
-</head>
 
-<body style="font-family: Arial; margin: 20px;">
+    <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f7fb;
+      margin: 0;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: 40px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    #chat-box {
+      height: 400px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      padding: 10px;
+      border-radius: 8px;
+      background: #fafafa;
+    }
+
+    .user {
+      margin: 8px 0;
+    }
+
+    .bot {
+      margin: 8px 0;
+      color: #0b5ed7;
+    }
+
+    input {
+      width: 75%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      padding: 10px 16px;
+      border: none;
+      background: #0b5ed7;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #094db1;
+    }
+    </style>
+
+</head>
+<body>
+
+<div class="container">
 
     <h2>🤖 Abhishek E-commerce Solutions</h2>
 
-    <div id="chat-box" style="border:1px solid #ccc; padding:10px; height:400px; overflow:auto;">
-    </div>
+    <div id="chat-box"></div>
 
     <br>
 
-    <input type="text" id="user-input" placeholder="Type your message..." style="width:80%; padding:10px;">
+    <input type="text" id="user-input" placeholder="Type your message...">
     <button onclick="sendMessage()">Send</button>
 
+</div>
     <script>
         async function sendMessage() {
             const input = document.getElementById("user-input");
