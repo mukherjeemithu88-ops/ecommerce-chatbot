@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Abhishek E-commerce Solutions</title>
+</head>
+<body>
+
+<h2>🤖 Abhishek E-commerce Solutions</h2>
+
+<div id="chat" style="border:1px solid #ccc; height:300px; overflow:auto; padding:10px;"></div>
+
+<br>
+
+<input id="msg" placeholder="Ask something..." style="width:70%;" />
+<button onclick="send()">Send</button>
+
+<script>
+async function send() {
+  const msg = document.getElementById("msg").value;
+
+  document.getElementById("chat").innerHTML += "<p><b>You:</b> " + msg + "</p>";
+
+  try {
+    const res = await fetch("https://unloved_dreamy_starving.ngrok-free.dev/chat", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({message: msg})
+    });
+
+    const data = await res.json();
+
+    document.getElementById("chat").innerHTML += "<p><b>Bot:</b> " + data.reply + "</p>";
+
+  } catch (error) {
+    document.getElementById("chat").innerHTML += "<p style='color:red;'>ERROR</p>";
+    console.error(error);
+  }
+}
+</script>
+
+</body>
+</html>
