@@ -47,6 +47,7 @@ def detect_category(user):
 
     return None
 
+
 # ---------- CHAT API ----------
 @app.post("/chat")
 async def chat(data: dict):
@@ -72,28 +73,30 @@ async def chat(data: dict):
 
     # show only top 3
     for row in results[:3]:
-        # Try to pick meaningful product name (not category or empty)
-product = ""
 
-for val in row.values:
-    text = str(val).strip()
+        # ✅ FIXED PRODUCT NAME LOGIC
+        product = ""
+        for val in row.values:
+            text = str(val).strip()
+            if text and "unnamed" not in text.lower() and len(text) > 5:
+                product = text
+                break
 
-    if text and "unnamed" not in text.lower() and len(text) > 5:
-        product = text
-        break
+        if not product:
+            product = "Product"
 
-if not product:
-    product = "Product"
+        response += f"🛍 {product}\n"
 
-        response += f"{product}\n"
-
-        # show only platform prices (columns 3 onwards)
+        # ✅ PLATFORM PRICES
         platforms = ["Amazon", "Flipkart", "Croma", "JioMart", "TataCliq"]
 
-for i, platform in enumerate(platforms):
-    if len(row) > i + 2:
-        value = row.iloc[i + 2]
+        for i, platform in enumerate(platforms):
+            if len(row) > i + 2:
+                value = row.iloc[i + 2]
 
-        if value and "unnamed" not in str(value).lower():
-            response += f"{platform}: {value}\n"
+                if value and "unnamed" not in str(value).lower():
+                    response += f"{platform}: {value}\n"
+
+        response += "\n"
+
     return {"response": response}
