@@ -58,52 +58,39 @@ df = df.fillna("").astype(str)
 async def chat(data: dict):
     try:
         user = data.get("message", "").lower()
-
-        # Apply simple AI mapping
         mapped_category = map_query_to_category(user)
 
-        categories = {
-            "smartphones": ["phone", "smartphone", "iphone"],
-            "earbuds": ["earbuds", "buds", "wireless"],
-            "smartwatch": ["watch", "smartwatch"],
-            "kitchen": ["kitchen", "appliance"],
-            "accessories": ["accessory", "charger", "cable"],
-            "decor": ["decor", "home"],
-            "health": ["health", "wellness"]
-        }
+        matched_rows = []
 
-        matched_category = None
+        # ✅ FILTER ONLY BY CATEGORY COLUMN (NOT FULL ROW)
+        for _, row in df.iterrows():
+            category = str(row.iloc[1]).lower()  # assuming 2nd column = Category
+            if mapped_category in category:
+                matched_rows.append(row)
 
-        for cat, keywords in categories.items():
-            if cat in mapped_category or any(word in mapped_category for word in keywords):
-                matched_category = cat
-                break
+        if matched_rows:
+            response = f"🔎 {mapped_category.title()} Results:\n\n"
 
-        if matched_category:
-            filtered = df[df.apply(lambda row: matched_category in row.to_string().lower(), axis=1)]
+            # ✅ TAKE ONLY TOP 3
+            for row in matched_rows[:3]:
+                product = str(row.iloc[0])
 
-            if not filtered.empty:
-                response = f"🔎 {matched_category.title()} Results:\n\n"
+                response += f"🛍 {product}\n"
 
-                # ✅ LIMIT RESULTS
-                filtered = filtered.head(3)
+                # ✅ HARD LIMIT ONLY 5 PLATFORMS (NO EXTRA JUNK)
+                platforms = ["Amazon", "Flipkart", "Croma", "JioMart", "TataCliq"]
 
-                for _, row in filtered.iterrows():
-                    product = str(row.iloc[0])
+                for i, platform in enumerate(platforms):
+                    if len(row) > i+2:
+                        value = str(row.iloc[i+2])
 
-                    response += f"🛍 {product}\n"
+                        # clean values
+                        if "unnamed" not in value.lower() and value.strip() != "":
+                            response += f"{platform}: {value}\n"
 
-                    # ✅ ONLY PLATFORM COLUMNS
-                    for col_name, value in row.items():
-                        col = col_name.lower()
+                response += "\n"
 
-                        if any(p in col for p in ["amazon", "flipkart", "croma", "jiomart", "tatacliq"]):
-                            if value and value != "nan":
-                                response += f"{col_name}: {value}\n"
-
-                    response += "\n"
-
-                return {"response": response}
+            return {"response": response}
 
         return {"response": "Try categories like smartphones, earbuds, kitchen, decor, health"}
 
