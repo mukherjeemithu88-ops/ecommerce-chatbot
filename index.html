@@ -50,33 +50,39 @@ button {
 </div>
 
 <script>
+<script>
 async function sendMessage() {
     const input = document.getElementById("user-input");
     const box = document.getElementById("chat-box");
 
     let msg = input.value;
+
     if (!msg) return;
 
-    const formatted = data.response.replace(/\n/g, "<br>");
-box.innerHTML += "<p><b>Bot:</b><br>" + formatted + "</p>";
+    // show user message
+    box.innerHTML += "<p><b>You:</b> " + msg + "</p>";
 
     try {
         const res = await fetch("/chat", {
             method: "POST",
-            headers: {"Content-Type":"application/json"},
-            body: JSON.stringify({message: msg})
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ message: msg })
         });
 
         const data = await res.json();
-        box.innerHTML += "<p><b>Bot:</b> " + data.response + "</p>";
 
-    } catch {
-        box.innerHTML += "<p style='color:red;'>ERROR</p>";
+        // ✅ safe formatting
+        let formatted = data.response.replace(/\\n/g, "<br>");
+
+        box.innerHTML += "<p><b>Bot:</b><br>" + formatted + "</p>";
+
+    } catch (error) {
+        box.innerHTML += "<p style='color:red;'>ERROR connecting to server</p>";
     }
 
     input.value = "";
+    box.scrollTop = box.scrollHeight;
 }
 </script>
-
-</body>
-</html>
