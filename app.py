@@ -85,23 +85,24 @@ async def chat(data: dict):
             if not filtered.empty:
                 response = f"🔎 {matched_category.title()} Results:\n\n"
 
-                    # limit to top 3 results
-filtered = filtered.head(3)
+                # ✅ LIMIT RESULTS
+                filtered = filtered.head(3)
 
-for _, row in filtered.iterrows():
-    product = str(row.iloc[0])
+                for _, row in filtered.iterrows():
+                    product = str(row.iloc[0])
 
-    response += f"🛍 {product}\n"
+                    response += f"🛍 {product}\n"
 
-    # only show price-related columns
-    for col_name, value in row.items():
-        col = col_name.lower()
+                    # ✅ ONLY PLATFORM COLUMNS
+                    for col_name, value in row.items():
+                        col = col_name.lower()
 
-        if any(platform in col for platform in ["amazon", "flipkart", "croma", "jiomart", "tatacliq"]):
-            if value and value != "nan":
-                response += f"{col_name}: {value}\n"
+                        if any(p in col for p in ["amazon", "flipkart", "croma", "jiomart", "tatacliq"]):
+                            if value and value != "nan":
+                                response += f"{col_name}: {value}\n"
 
-    response += "\n"
+                    response += "\n"
+
                 return {"response": response}
 
         return {"response": "Try categories like smartphones, earbuds, kitchen, decor, health"}
