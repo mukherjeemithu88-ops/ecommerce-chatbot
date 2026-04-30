@@ -72,16 +72,28 @@ async def chat(data: dict):
 
     # show only top 3
     for row in results[:3]:
-        product = row.iloc[0]
+        # Try to pick meaningful product name (not category or empty)
+product = ""
+
+for val in row.values:
+    text = str(val).strip()
+
+    if text and "unnamed" not in text.lower() and len(text) > 5:
+        product = text
+        break
+
+if not product:
+    product = "Product"
 
         response += f"{product}\n"
 
         # show only platform prices (columns 3 onwards)
-        for i, col in enumerate(df.columns[2:7]):
-            value = row.iloc[i+2]
-            if value:
-                response += f"{col}: {value}\n"
+        platforms = ["Amazon", "Flipkart", "Croma", "JioMart", "TataCliq"]
 
-        response += "\n"
+for i, platform in enumerate(platforms):
+    if len(row) > i + 2:
+        value = row.iloc[i + 2]
 
+        if value and "unnamed" not in str(value).lower():
+            response += f"{platform}: {value}\n"
     return {"response": response}
