@@ -51,15 +51,16 @@ async def chat(data: dict):
             response = f"🔎 {matched_category.title()} Results:\n\n"
 
             for _, row in filtered.iterrows():
-                product = row.iloc[0]
-                amazon = row.iloc[1] if len(row) > 1 else ""
-                flipkart = row.iloc[2] if len(row) > 2 else ""
-                croma = row.iloc[3] if len(row) > 3 else ""
+            product = row.iloc[0]  # first column = product name
 
-                response += f"Product: {product}\n"
-                response += f"Amazon: {amazon}\n"
-                response += f"Flipkart: {flipkart}\n"
-                response += f"Croma: {croma}\n\n"
+response += f"Product: {product}\n"
+
+# loop through all remaining columns dynamically
+for col_name, value in row.items():
+    if col_name.lower() not in ["product", "category"]:
+        response += f"{col_name}: {value}\n"
+
+response += "\n"
 
             return {"response": response}
 
