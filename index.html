@@ -57,7 +57,8 @@ async function sendMessage() {
     let msg = input.value;
     if (!msg) return;
 
-    box.innerHTML += "<p><b>You:</b> " + msg + "</p>";
+    const formatted = data.response.replace(/\n/g, "<br>");
+box.innerHTML += "<p><b>Bot:</b><br>" + formatted + "</p>";
 
     try {
         const res = await fetch("/chat", {
