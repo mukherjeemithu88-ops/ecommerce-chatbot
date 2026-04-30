@@ -51,10 +51,15 @@ async def chat(data: dict):
             response = f"🔎 {matched_category.title()} Results:\n\n"
 
             for _, row in filtered.iterrows():
-                response += f"Product: {row.get('Product','')}\n"
-                response += f"Amazon: {row.get('Amazon','')}\n"
-                response += f"Flipkart: {row.get('Flipkart','')}\n"
-                response += f"Croma: {row.get('Croma','')}\n\n"
+                product = row.iloc[0]
+                amazon = row.iloc[1] if len(row) > 1 else ""
+                flipkart = row.iloc[2] if len(row) > 2 else ""
+                croma = row.iloc[3] if len(row) > 3 else ""
+
+                response += f"Product: {product}\n"
+                response += f"Amazon: {amazon}\n"
+                response += f"Flipkart: {flipkart}\n"
+                response += f"Croma: {croma}\n\n"
 
             return {"response": response}
 
