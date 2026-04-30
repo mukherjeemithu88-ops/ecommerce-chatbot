@@ -5,40 +5,11 @@ import pandas as pd
 
 app = FastAPI()
 
-# ---------- SIMPLE AI LAYER ----------
-def map_query_to_category(user_input):
-    user_input = user_input.lower()
-
-    if any(word in user_input for word in ["phone", "iphone", "mobile"]):
-        return "smartphones"
-
-    elif any(word in user_input for word in ["earbud", "buds", "airpods"]):
-        return "earbuds"
-
-    elif any(word in user_input for word in ["watch", "smartwatch", "watches"]):
-        return "smartwatches"
-
-    elif any(word in user_input for word in ["kitchen", "mixer", "grinder", "appliance"]):
-        return "kitchen"
-
-    elif any(word in user_input for word in ["charger", "cable", "accessory"]):
-        return "accessories"
-
-    elif any(word in user_input for word in ["decor", "home", "lamp"]):
-        return "decor"
-
-    elif any(word in user_input for word in ["health", "fitness", "wellness"]):
-        return "health"
-
-    return user_input
-
-
 # ---------- SERVE UI ----------
 @app.get("/", response_class=HTMLResponse)
 def serve_ui():
     with open("index.html", "r") as f:
         return f.read()
-
 
 # ---------- CORS ----------
 app.add_middleware(
@@ -52,50 +23,65 @@ app.add_middleware(
 df = pd.read_excel("data.xlsx")
 df = df.fillna("").astype(str)
 
+# ---------- SIMPLE CATEGORY DETECTION ----------
+def detect_category(user):
+    user = user.lower()
+
+    if any(x in user for x in ["phone", "iphone"]):
+        return "smartphones"
+
+    if any(x in user for x in ["earbud", "buds"]):
+        return "earbuds"
+
+    if any(x in user for x in ["watch"]):
+        return "smartwatch"
+
+    if any(x in user for x in ["kitchen"]):
+        return "kitchen"
+
+    if any(x in user for x in ["decor", "home"]):
+        return "decor"
+
+    if any(x in user for x in ["health", "fitness"]):
+        return "health"
+
+    return None
 
 # ---------- CHAT API ----------
 @app.post("/chat")
 async def chat(data: dict):
-    try:
-        user = data.get("message", "").lower()
+    user = data.get("message", "").lower()
 
-        # map user query
-        mapped_category = map_query_to_category(user)
+    category = detect_category(user)
 
-        matched_rows = []
+    if not category:
+        return {"response": "Try categories like smartphones, decor, kitchen, health"}
 
-        # ✅ SEARCH ENTIRE ROW (NOT JUST ONE COLUMN)
-        for _, row in df.iterrows():
-            row_text = " ".join([str(v).lower() for v in row.values])
+    results = []
 
-            if mapped_category in row_text:
-                matched_rows.append(row)
+    for _, row in df.iterrows():
+        row_text = " ".join(row.values).lower()
 
-        if matched_rows:
-            response = f"🔎 {mapped_category.title()} Results:\n\n"
+        if category in row_text:
+            results.append(row)
 
-            # ✅ LIMIT TO TOP 3 RESULTS
-            for row in matched_rows[:3]:
-                product = str(row.iloc[0])
+    if not results:
+        return {"response": "No matching products found"}
 
-                response += f"🛍 {product}\n"
+    response = f"{category.upper()} RESULTS:\n\n"
 
-                # ✅ ONLY SHOW 5 PLATFORMS
-                platforms = ["Amazon", "Flipkart", "Croma", "JioMart", "TataCliq"]
+    # show only top 3
+    for row in results[:3]:
+        product = row.iloc[0]
 
-                for i, platform in enumerate(platforms):
-                    if len(row) > i + 2:
-                        value = str(row.iloc[i + 2])
+        response += f"{product}\n"
 
-                        # clean unwanted text
-                        if value and "unnamed" not in value.lower():
-                            response += f"{platform}: {value}\n"
+        # show only platform prices (columns 3 onwards)
+        for i, col in enumerate(df.columns[2:7]):
+            value = row.iloc[i+2]
+            if value:
+                response += f"{col}: {value}\n"
 
-                response += "\n"
+        response += "\n"
 
-            return {"response": response}
-
-        return {"response": "No matching products found. Try smartphones, decor, kitchen, etc."}
-
-    except Exception as e:
-        return {"response": f"Error: {str(e)}"}
+    return {"response": response}
