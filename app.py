@@ -15,8 +15,8 @@ def map_query_to_category(user_input):
     elif any(word in user_input for word in ["earbud", "buds", "airpods"]):
         return "earbuds"
 
-    elif any(word in user_input for word in ["watch", "smartwatch"]):
-        return "smartwatch"
+    elif any(word in user_input for word in ["watch", "smartwatch", "watches"]):
+        return "smartwatches"
 
     elif any(word in user_input for word in ["kitchen", "mixer", "grinder", "appliance"]):
         return "kitchen"
@@ -58,41 +58,44 @@ df = df.fillna("").astype(str)
 async def chat(data: dict):
     try:
         user = data.get("message", "").lower()
+
+        # map user query
         mapped_category = map_query_to_category(user)
 
         matched_rows = []
 
-        # ✅ FILTER ONLY BY CATEGORY COLUMN (NOT FULL ROW)
+        # ✅ SEARCH ENTIRE ROW (NOT JUST ONE COLUMN)
         for _, row in df.iterrows():
-            category = str(row.iloc[1]).lower()  # assuming 2nd column = Category
-            if mapped_category in category:
+            row_text = " ".join([str(v).lower() for v in row.values])
+
+            if mapped_category in row_text:
                 matched_rows.append(row)
 
         if matched_rows:
             response = f"🔎 {mapped_category.title()} Results:\n\n"
 
-            # ✅ TAKE ONLY TOP 3
+            # ✅ LIMIT TO TOP 3 RESULTS
             for row in matched_rows[:3]:
                 product = str(row.iloc[0])
 
                 response += f"🛍 {product}\n"
 
-                # ✅ HARD LIMIT ONLY 5 PLATFORMS (NO EXTRA JUNK)
+                # ✅ ONLY SHOW 5 PLATFORMS
                 platforms = ["Amazon", "Flipkart", "Croma", "JioMart", "TataCliq"]
 
                 for i, platform in enumerate(platforms):
-                    if len(row) > i+2:
-                        value = str(row.iloc[i+2])
+                    if len(row) > i + 2:
+                        value = str(row.iloc[i + 2])
 
-                        # clean values
-                        if "unnamed" not in value.lower() and value.strip() != "":
+                        # clean unwanted text
+                        if value and "unnamed" not in value.lower():
                             response += f"{platform}: {value}\n"
 
                 response += "\n"
 
             return {"response": response}
 
-        return {"response": "Try categories like smartphones, earbuds, kitchen, decor, health"}
+        return {"response": "No matching products found. Try smartphones, decor, kitchen, etc."}
 
     except Exception as e:
         return {"response": f"Error: {str(e)}"}
