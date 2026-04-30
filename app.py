@@ -85,18 +85,23 @@ async def chat(data: dict):
             if not filtered.empty:
                 response = f"🔎 {matched_category.title()} Results:\n\n"
 
-                for _, row in filtered.iterrows():
-                    product = row.iloc[0]  # first column
+                    # limit to top 3 results
+filtered = filtered.head(3)
 
-                    response += f"Product: {product}\n"
+for _, row in filtered.iterrows():
+    product = str(row.iloc[0])
 
-                    # show all platforms dynamically
-                    for col_name, value in row.items():
-                        if col_name.lower() not in ["product", "category"]:
-                            response += f"{col_name}: {value}\n"
+    response += f"🛍 {product}\n"
 
-                    response += "\n"
+    # only show price-related columns
+    for col_name, value in row.items():
+        col = col_name.lower()
 
+        if any(platform in col for platform in ["amazon", "flipkart", "croma", "jiomart", "tatacliq"]):
+            if value and value != "nan":
+                response += f"{col_name}: {value}\n"
+
+    response += "\n"
                 return {"response": response}
 
         return {"response": "Try categories like smartphones, earbuds, kitchen, decor, health"}
