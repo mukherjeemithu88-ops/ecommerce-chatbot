@@ -55,51 +55,52 @@
 </div>
 
 <script>
-const input = document.getElementById("user-input");
-const button = document.getElementById("send-btn");
-const box = document.getElementById("chat-box");
+<script>
+document.addEventListener("DOMContentLoaded", function () {
 
-// ✅ Button click event
-button.addEventListener("click", sendMessage);
+    const input = document.getElementById("user-input");
+    const button = document.getElementById("send-btn");
+    const box = document.getElementById("chat-box");
 
-// ✅ Enter key support
-input.addEventListener("keypress", function(e) {
-    if (e.key === "Enter") {
-        sendMessage();
+    // ✅ Button click
+    button.addEventListener("click", sendMessage);
+
+    // ✅ Enter key
+    input.addEventListener("keypress", function(e) {
+        if (e.key === "Enter") {
+            sendMessage();
+        }
+    });
+
+    async function sendMessage() {
+        let msg = input.value;
+
+        if (!msg) return;
+
+        box.innerHTML += "<p><b>You:</b> " + msg + "</p>";
+
+        try {
+            const res = await fetch("/chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ message: msg })
+            });
+
+            const data = await res.json();
+
+            let formatted = data.response.replace(/\n/g, "<br>");
+
+            box.innerHTML += "<p><b>Bot:</b><br>" + formatted + "</p>";
+
+        } catch (err) {
+            box.innerHTML += "<p style='color:red;'>ERROR connecting to backend</p>";
+        }
+
+        input.value = "";
+        box.scrollTop = box.scrollHeight;
     }
+
 });
-
-async function sendMessage() {
-    let msg = input.value;
-
-    if (!msg) return;
-
-    box.innerHTML += "<p><b>You:</b> " + msg + "</p>";
-
-    try {
-        const res = await fetch("/chat", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ message: msg })
-        });
-
-        const data = await res.json();
-
-        // ✅ Clean formatting
-        let formatted = data.response.replace(/\n/g, "<br>");
-
-        box.innerHTML += "<p><b>Bot:</b><br>" + formatted + "</p>";
-
-    } catch (err) {
-        box.innerHTML += "<p style='color:red;'>ERROR connecting to backend</p>";
-    }
-
-    input.value = "";
-    box.scrollTop = box.scrollHeight;
-}
 </script>
-
-</body>
-</html>
